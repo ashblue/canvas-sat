@@ -7,64 +7,57 @@ Author URL: http://blueashes.com
 
 // How to figure out what a user's computer can handle for frames with fallbacks
 // Original by Paul Irish: http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// Clear interval version here created by Jerome Etienne http://notes.jetienne.com/2011/05/18/cancelRequestAnimFrame-for-paul-irish-requestAnimFrame.html
 window.requestAnimFrame = ( function() {
-    return window.requestAnimationFrame         || 
-    window.webkitRequestAnimationFrame          || 
-    window.mozRequestAnimationFrame             || 
-    window.oRequestAnimationFrame               || 
-    window.msRequestAnimationFrame              || 
-    function(/* function */ callback, /* DOMElement */ element){
+    return window.requestAnimationFrame         ||
+    window.webkitRequestAnimationFrame          ||
+    window.mozRequestAnimationFrame             ||
+    window.oRequestAnimationFrame               ||
+    window.msRequestAnimationFrame              ||
+    function (callback, element){
         return window.setTimeout(callback, 1000 / 60);
     };
-})();
+}());
 
 var Game = {
     // Setup configuration
     canvas: document.getElementById('canvas'),
+    satDelay: 100,
+    satCount: 0,
     setup: function() {
         if (this.canvas.getContext){
             // Setup variables
             this.ctx = this.canvas.getContext('2d');
-            
+
             // Run the game
             this.init();
             this.animate();
         }
     },
-    
+
     init: function() {
-        Square.init();
-        Triangle.init();
+        Square1.init();
+        Square2.init();
     },
-    
+
     animate: function() {
         // Run from the global space, so you must use Game instead of this to prevent a crash
         Game.draw();
         Game.play = requestAnimFrame(Game.animate);
     },
-    
+
     draw: function() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
-        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
         // Draw objects
-        Square.draw();
-        Triangle.draw();
-    },
-    
-    detectCollisions: function() {
-        var textY = 30;
-        
-        if (shapeBeingDragged) {
-           shapes.forEach( function (shape) {
-              if (shape !== shapeBeingDragged) {
-                 if (shapeBeingDragged.collidesWith(shape)) {
-                    context.fillStyle = shape.fillStyle;
-                    context.fillText('collision', 20, textY);
-                    textY += 40;
-                 }
-              }
-           });
+        Square1.draw();
+        Square2.draw();
+
+        // Run separation axis theorem
+        if (this.satCount < this.satDelay) {
+            this.satCount += 1;
+        } else {
+            lib.vert.sat(Square1.vertices, Square2.vertices);
+            this.satCount = 0;
         }
     }
 };
@@ -72,90 +65,82 @@ var Game = {
 /***************************
 Game Objects
 ***************************/
-var Square = {
-    x: 20,
-    y: 20,
+var Square1 = {
+    x: 70,
+    y: 70,
     width: 50,
     height: 50,
-    point: function(x, y) {
-        return {
-            x: x,
-            y: y
-        };
-    },
-    init: function() {
-        this.points = [
-            this.point(this.x, this.y),
-            this.point(this.x + this.width, this.y),
-            this.point(this.x + this.width, this.y + this.height),
-            this.point(this.x, this.y + this.height)
-        ]
-    },
-    draw: function() {
-        Game.ctx.alpha = .5;
-        Game.ctx.fillStyle = '#000';
-        Game.ctx.fillRect(this.x, this.y, this.width, this.height);
-    }
-};
+    angle: 0,
+    color: '#f00',
+    alpha: 0.5,
+    vertices: null,
 
-var Triangle = {
     init: function() {
-        this.points = [
-            this.point(250, 150),
-            this.point(250, 250),
-            this.point(350, 250)
-        ]
+        this.vertices = lib.vert.convertSquare(this);
     },
+
     draw: function() {
-        Game.ctx.alpha = .5;
-        Game.ctx.fillStyle = '#ff0';
-        this.polygon();
-        Game.ctx.fill();
-    },
-    point: function(x, y) {
-        return {
-            x: x,
-            y: y
-        };
-    },
-    polygon: function() {
-        Game.ctx.beginPath();
-        
-        for (var p = this.points.length; p--;) {
-            Game.ctx.lineTo(this.points[p].x, this.points[p].y);
+        // Define draw properties
+        Game.ctx.globalAlpha = this.alpha;
+        Game.ctx.fillStyle = this.color;
+
+        // Draw the rectangle
+        if (this.angle !== 0) {
+            Game.ctx.save();
+            Game.ctx.translate(this.center[0], this.center[1]);
+            Game.ctx.rotate(lib.calc.degreesToRadian(this.angle));
+            Game.ctx.translate(-this.center[0], -this.center[1]);
         }
-        
-        Game.ctx.closePath();
+        Game.ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.angle !== 0) {
+            Game.ctx.restore();
+        }
+
+        // Draw the vertices
+        Game.ctx.fillStyle = '#000';
+        Game.ctx.globalAlpha = 1;
+        for (var i = this.vertices.length; i--;) {
+            Game.ctx.fillRect(this.vertices[i][0] - 2, this.vertices[i][1] - 2, 4, 4);
+        }
     }
 };
 
-// Checks for SAT impact
-var CollideTest = {
-    collidesWith: function (shape) {
-        var axes = this.getAxes().concat(shape.getAxes());
-        return !this.separationOnAxes(axes, shape);
-    },
-    draw: function() {
-        //Square.points;
-        //Triangle.points;
-        
+var Square2 = {
+    x: 30,
+    y: 30,
+    width: 50,
+    height: 50,
+    angle: 0,
+    color: '#00f',
+    alpha: 0.5,
 
-        
-        //function detectCollisions() {
-        //    var textY = 30;
-        //    
-        //    if (shapeBeingDragged) {
-        //       shapes.forEach( function (shape) {
-        //          if (shape !== shapeBeingDragged) {
-        //             if (shapeBeingDragged.collidesWith(shape)) {
-        //                context.fillStyle = shape.fillStyle;
-        //                context.fillText('collision', 20, textY);
-        //                textY += 40;
-        //             }
-        //          }
-        //       });
-        //    }
-        //};
+    init: function() {
+        this.vertices = lib.vert.convertSquare(this);
+    },
+
+    draw: function() {
+        // Define draw properties
+        Game.ctx.globalAlpha = this.alpha;
+        Game.ctx.fillStyle = this.color;
+
+        // Draw the rectangle
+        if (this.angle !== 0) {
+            Game.ctx.save();
+            Game.ctx.translate(this.center[0], this.center[1]);
+            Game.ctx.rotate(lib.calc.degreesToRadian(this.angle));
+            Game.ctx.translate(-this.center[0], -this.center[1]);
+        }
+        Game.ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.angle !== 0) {
+            Game.ctx.restore();
+        }
+
+        // Draw the vertices
+        Game.ctx.fillStyle = '#000';
+        Game.ctx.globalAlpha = 1;
+        for (var i = this.vertices.length; i--;) {
+            Game.ctx.fillRect(this.vertices[i][0] - 2, this.vertices[i][1] - 2, 4, 4);
+        }
     }
 };
 
@@ -164,4 +149,4 @@ Run Game
 ***************************/
 window.onload = function() {
     Game.setup();
-}
+};
