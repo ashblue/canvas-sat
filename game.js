@@ -64,11 +64,11 @@ var Game = {
 Game Objects
 ***************************/
 var Square1 = {
-    x: 70,
-    y: 70,
+    x: 100,
+    y: 55,
     width: 50,
-    height: 50,
-    angle: 0,
+    height: 10,
+    angle: 45,
     color: '#f00',
     alpha: 0.5,
     vertices: null,
