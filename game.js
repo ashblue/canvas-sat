@@ -21,7 +21,7 @@ window.requestAnimFrame = ( function() {
 var Game = {
     // Setup configuration
     canvas: document.getElementById('canvas'),
-    satDelay: 100,
+    satDelay: true,
     satCount: 0,
     setup: function() {
         if (this.canvas.getContext){
@@ -53,11 +53,9 @@ var Game = {
         Square2.draw();
 
         // Run separation axis theorem
-        if (this.satCount < this.satDelay) {
-            this.satCount += 1;
-        } else {
+        if (this.satDelay) {
             lib.vert.sat(Square1.vertices, Square2.vertices);
-            this.satCount = 0;
+            this.satDelay = false;
         }
     }
 };

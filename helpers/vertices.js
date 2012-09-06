@@ -99,21 +99,32 @@ var lib = lib || {};
         /**
          * Separation Axis Theorem test to two convex polygons and see if the overlap.
          * @link http://stackoverflow.com/questions/115426/algorithm-to-detect-intersection-of-two-rectangles
+         * @param {array} shape1 A collection of vertices that create a convext polygon
+         * @param {array} shape2 Same as shape1, use to test for overlap
+         * @returns {boolean} True if the shapes overlap, false otherwise
          * @todo See if the loop can be reverse and still work for faster processing
          */
         sat: function (shape1, shape2) {
             // Loop through all vertices of shape 1
-            var edge, pointSibling;
-            for (var i = 0; i < shape1.length; i++) {
-                // Get the edge
-                if (i === shape1.length) {
-                    pointSibling = 0;
-                } else {
+            var i, j, pointSibling, edge, perpendicular;
+            for (i = 0; i < shape1.length; i++) {
+                // Get the current edge
+                if (i + 1 < shape1.length) {
                     pointSibling = i + 1;
+                } else {
+                    pointSibling = 0;
                 }
-                edge = shape1[i] - shape1[pointSibling];
+                // Might need to be an absolute difference, not too sure
+                edge = this.subtract(shape1[i], shape1[pointSibling]);
 
-                console.log(edge);
+                // Turn edge into a perpendicular line
+                perpendicular = this.vertex(-edge[1], edge[0]);
+
+                // Test the sign of each opposing square's point
+                for (j = 0; j < shape2.length; j++) {
+                    //console.log(perpendicular[0], shape2[j][0], shape1[pointSibling][0], perpendicular[1], shape2[j][1], shape1[pointSibling][1]);
+                    console.log(lib.calc.sign(perpendicular[0] * (shape2[j][0] - shape1[pointSibling][0]) + perpendicular[1] * (shape2[j][1] - shape1[pointSibling][1])));
+                }
             }
         },
 

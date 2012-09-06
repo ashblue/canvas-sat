@@ -21,5 +21,14 @@ lib.calc = {
      */
     degreesToRadian: function (degrees) {
         return degrees * (Math.PI / 180);
+    },
+
+    /**
+     * A sign is the dot product of a number. Meaning it pretty much tests if a number is in positive or negative space.
+     * @link http://en.wikipedia.org/wiki/Sign_function
+     * @link http://en.wikipedia.org/wiki/Dot_product
+     */
+    sign: function (number) {
+        return number && number / Math.abs(number);
     }
 };
