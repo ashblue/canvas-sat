@@ -2,14 +2,18 @@ var lib = lib || {};
 
 (function () {
     _private = {
+        /**
+         * SAT edge test
+         */
         testEdges: function (shape1, shape2) {
-            var i, j, pointSibling, edge, perpendicular, stack = [], total = 0, testResult;
+            var i, j, pointSibling, edge, perpendicular, stack = [], total = 0, testResult, test, gapCount;
             for (i = 0; i < shape1.length; i++) {
                 // Get the current edge
                 if (i + 1 < shape1.length) {
                     pointSibling = i + 1;
                 } else {
                     pointSibling = 0;
+
                 }
                 // Might need to be an absolute difference, not too sure
                 edge = lib.vert.subtract(shape1[i], shape1[pointSibling]);
@@ -17,16 +21,32 @@ var lib = lib || {};
                 // Turn edge into a perpendicular line
                 perpendicular = lib.vert.vertex(-edge[1], edge[0]);
 
-                // Test the sign of each opposing square's point
-                for (j = 0; j < shape2.length; j++) {
-                    testResult = lib.calc.sign(perpendicular[0] * (shape2[j][0] - shape1[pointSibling][0]) + perpendicular[1] * (shape2[j][1] - shape1[pointSibling][1]));
-                    //console.log(perpendicular[0], shape2[j][0], shape1[pointSibling][0], perpendicular[1], shape2[j][1], shape1[pointSibling][1]);
-                    stack.push(testResult);
-                    total += testResult;
+                // Test the sign of each opposing square's point, returns false here if a gap is detected
+                if (this.separationTest(perpendicular, shape1[pointSibling], shape2)) {
+                    return false;
                 }
             }
 
-            return stack;
+            // No gap between edges
+            return true;
+        },
+
+        /**
+         * SAT test to look for a gap
+         */
+        separationTest: function (perpendicular, shape1, shape2) {
+            for (j = 0; j < shape2.length; j++) {
+                // Four consecutive 1s or 0s mean that there is a gap
+                testResult = lib.calc.sign(perpendicular[0] * (shape2[j][0] - shape1[0]) + perpendicular[1] * (shape2[j][1] - shape1[1]));
+
+                // 0 and 1 indicates a gap may be present, -1 indicates that there is no gap
+                if (testResult === -1) {
+                    return false;
+                }
+            }
+
+            // Gap is present
+            return true;
         }
     };
 
@@ -131,8 +151,15 @@ var lib = lib || {};
          * @todo Still needs to compare against the other rectangle
          */
         sat: function (shape1, shape2) {
-            console.log(_private.testEdges(shape1, shape2));
-            console.log(_private.testEdges(shape2, shape1));
+            if (_private.testEdges(shape1, shape2) === false) {
+                return false;
+            }
+
+            if (_private.testEdges(shape2, shape1) === false) {
+                return false;
+            }
+
+            return true;
 
             // Loop through all vertices of shape 1
             //var i, j, pointSibling, edge, perpendicular;

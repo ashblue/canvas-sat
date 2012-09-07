@@ -37,6 +37,7 @@ var Game = {
     init: function() {
         Square1.init();
         Square2.init();
+        triangle.init();
     },
 
     animate: function() {
@@ -49,12 +50,14 @@ var Game = {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw objects
-        Square1.draw();
+        //Square1.draw();
         Square2.draw();
+        triangle.draw();
 
         // Run separation axis theorem
         if (this.satDelay) {
-            lib.vert.sat(Square1.vertices, Square2.vertices);
+            console.log(lib.vert.sat(triangle.vertices, Square2.vertices));
+            //console.log(lib.vert.sat(Square1.vertices, Square2.vertices));
             this.satDelay = false;
         }
     }
@@ -64,9 +67,9 @@ var Game = {
 Game Objects
 ***************************/
 var Square1 = {
-    x: 100,
-    y: 55,
-    width: 50,
+    x: 10,
+    y: 70,
+    width: 100,
     height: 10,
     angle: 45,
     color: '#f00',
@@ -108,7 +111,7 @@ var Square2 = {
     y: 30,
     width: 50,
     height: 50,
-    angle: 0,
+    angle: 45,
     color: '#00f',
     alpha: 0.5,
 
@@ -129,6 +132,66 @@ var Square2 = {
             Game.ctx.translate(-this.center[0], -this.center[1]);
         }
         Game.ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.angle !== 0) {
+            Game.ctx.restore();
+        }
+
+        // Draw the vertices
+        Game.ctx.fillStyle = '#000';
+        Game.ctx.globalAlpha = 1;
+        for (var i = this.vertices.length; i--;) {
+            Game.ctx.fillRect(this.vertices[i][0] - 2, this.vertices[i][1] - 2, 4, 4);
+        }
+    }
+};
+
+/**
+ * @todo Ask Adam about triangles and why they must go in the order or must go in the order of top, right, left to work for some odd reason
+ */
+var triangle = {
+    color: '#ff0',
+    angle: 0,
+    alpha: 0.5,
+
+    init: function () {
+        // Vertices on triangles must go in the order of top, right, left to work for some odd reason
+        this.vertices = [
+            [60, 0],
+            [30, 90],
+            [10, 30]
+        ];
+        console.log(this.vertices);
+
+        this.center = [
+            (this.vertices[0][0] + this.vertices[1][0] + this.vertices[2][0]) / 3,
+            (this.vertices[0][1] + this.vertices[1][1] + this.vertices[2][1]) / 3
+        ];
+    },
+
+    draw: function () {
+        // Define draw properties
+        Game.ctx.globalAlpha = this.alpha;
+        Game.ctx.fillStyle = this.color;
+
+        // Draw the rectangle
+        if (this.angle !== 0) {
+            Game.ctx.save();
+            Game.ctx.translate(this.center[0], this.center[1]);
+            Game.ctx.rotate(lib.calc.degreesToRadian(this.angle));
+            Game.ctx.translate(-this.center[0], -this.center[1]);
+        }
+        Game.ctx.beginPath();
+
+        for (var n = 0; n < this.vertices.length; n++) {
+            if (n === 0) {
+                Game.ctx.moveTo(this.vertices[n][0], this.vertices[n][1]);
+                continue;
+            }
+
+            Game.ctx.lineTo(this.vertices[n][0], this.vertices[n][1]);
+        }
+        Game.ctx.closePath();
+        Game.ctx.stroke();
         if (this.angle !== 0) {
             Game.ctx.restore();
         }
